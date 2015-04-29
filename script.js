@@ -16,13 +16,8 @@ function fillPolygon(boundaryPolygon, layoutRules) {
           topRight    = Geometry.offset(bottomRight, height, 0)
 
       var bounds      = new google.maps.LatLngBounds(),
-          positions   = [], pos,
+          positions   = [topLeft, topRight, bottomLeft, bottomRight], pos,
           isContained = true
-
-      positions.push(topLeft)
-      positions.push(topRight)
-      positions.push(bottomLeft)
-      positions.push(bottomRight)
 
       // determine if each corner of the proposed rectangle is in the boundary polygon
       _.forEach(positions, function(pos, i) {
