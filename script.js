@@ -15,9 +15,9 @@ function fillPolygon(boundaryPolygon, layoutRules) {
           bottomRight = Geometry.offset(bottomLeft, width, 90),
           topRight    = Geometry.offset(bottomRight, height, 0)
 
-      var bounds      = new google.maps.LatLngBounds(),
-          positions   = [topLeft, topRight, bottomLeft, bottomRight], pos,
-          isContained = true
+      var bounds         = new google.maps.LatLngBounds(),
+          pos, positions = _.map([topLeft, topRight, bottomLeft, bottomRight], applyDesignPropsAt),
+          isContained    = true
 
       // determine if each corner of the proposed rectangle is in the boundary polygon
       _.forEach(positions, function(pos, i) {
@@ -40,16 +40,48 @@ function fillPolygon(boundaryPolygon, layoutRules) {
       }
     }
 
+    // apply module design properties at location (orientation, azimuth, tilt)
+    function applyDesignPropsAt(xy) {
+      var lat = xy.lat(),
+          lng = xy.lng()
+
+      var orientation = layoutRules.orientation,
+          azimuth     = layoutRules.azimuth
+
+       // FIXME - buggy, rotate calculation seems way off
+      if (orientation === 'horizontal') {
+        var orientXY = Geometry.rotate([lng, lat], 90)
+
+        xy = new google.maps.LatLng(orientXY[0], orientXY[1])
+      }
+
+       // FIXME - buggy, rotate calculation seems way off
+      // if (azimuth) {
+      //   var azimuthXY = Geometry.rotate([lng, lat], azimuth)
+
+      //   xy = new google.maps.LatLng(azimuthXY[0], azimuthXY[1])
+      // }
+
+      // TODO - tilt
+
+      return xy
+    }
+
+    // apply row spacing with consideration to overall azimuth
+    function applyPositionOffsetsAt(xy) {
+      return Geometry.offset(xy, layoutRules.rowSpacing, layoutRules.azimuth)
+    }
+
     function createModules() {
       var startXY = boundaryPath.getAt(0)
 
       var boundNE = extendedBoundary.getNorthEast(),
           boundSW = extendedBoundary.getSouthWest()
 
-      var modHeight = Number(layoutRules.height),
-          modWidth  = Number(layoutRules.width)
+      var modHeight = layoutRules.height,
+          modWidth  = layoutRules.width
 
-      // FIXME - has issues if you start in SW corner and head north. seems dependent on starting at NE corner.
+      // FIXME - has issues if you start in SW corner and head north. seems dependent on starting at NE corner and moving clockwise.
       var maxModsX = Math.round(Geometry.distance(startXY, boundNE) / modWidth),
           maxModsY = Math.round(Geometry.distance(startXY, boundSW) / modHeight)
 
@@ -60,7 +92,7 @@ function fillPolygon(boundaryPolygon, layoutRules) {
         for(var y = 0; y < maxModsY; y++) {
           var offsetX  = boundSW.lng() + (xStep * x),
               offsetY  = boundSW.lat() + (yStep * y),
-              offsetXY = new google.maps.LatLng(offsetY, offsetX)
+              offsetXY = applyPositionOffsetsAt(new google.maps.LatLng(offsetY, offsetX))
 
           maybeCreateModuleAt(offsetXY, modHeight, modWidth)
         }
