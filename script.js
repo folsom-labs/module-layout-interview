@@ -81,7 +81,7 @@ function fillPolygon(boundaryPolygon, layoutRules) {
       var modHeight = layoutRules.height,
           modWidth  = layoutRules.width
 
-      // FIXME - has issues if you start in SW corner and head north. seems dependent on starting at NE corner.
+      // FIXME - has issues if you start in SW corner and head north. seems dependent on starting at NE corner and moving clockwise.
       var maxModsX = Math.round(Geometry.distance(startXY, boundNE) / modWidth),
           maxModsY = Math.round(Geometry.distance(startXY, boundSW) / modHeight)
 
