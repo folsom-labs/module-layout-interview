@@ -3,23 +3,18 @@
 In this question, you'll need to create a tiling algorithm to fill a user defined polygon with Solar Panels.  We've already created sample code that lets a user input a polygon on Google Maps and then draws a single rectangle representing a solar panel at an arbitrary point (`fillPolygon` is the relevant function here).
 
 ### Instructions
-Spend an hour or two (please don't spend more time than that), to see how far you can get in implementing all the UI hooks.  Feel free to modify the code however you see fit.
+Spend an hour or two (please don't spend any more time than that), and see how far you can get.  Feel free to modify the code however you see fit.
 
-You can view the code simply by opening index.html in a browser.  If you have any questions while working on it, please contact paul.gibbs@folsomlabs.com
+The goal is to create a simple algorithm that fills a user defined polygon with solar panels (known as solar *modules* in the industry). Ideally solar modules should only be placed in the polygon if they fit entirely in the shape (note, this rule is not enforced in the current dummy code).
 
-#### If starting the problem from scratch it probably makes sense to go roughly in the order in the interface:
+The current parameters to use for your layout code are:
+* *module width* how wide the solar panels are in meters (e.g. in the x-axis)
+* *module height* how tall the solar panels are in meters (e.g. in the y-axis)
+* *row spacing* how much space to leave between adjacent rows of modules in meters.  See the linked documentation for a better understanding of row spacing
 
-1. Using **Module Width** and **Module Height**, fill the polygon with valid modules.  These are both defined in meters.
+This is based on a real problem we have in HelioScope – the first step (of a very long) analysis pipeline is simply figure out how many solar panels could fit in a given area. [This training video (1:39)](https://www.youtube.com/watch?v=cnyIpSLW6hg) from HelioScope shows how many of the rules work. [This image](https://helioscope.folsomlabs.com/static/helioscope/documentation/static/overlays/fixed-racking.png) from our documentation visualizes a few of these parameters: **row spacing**, **tilt**, and **modules in row** ('Frame Size = 4 Modules Up' would be the same as '4 **Modules in Row**')
 
-2. Implement **row spacing** so that the user can space all the row of modules apart.  This is the number of meters between adjacent rows of modules.
+### Submission
 
-3. Implement **Modules in Row** since usually solar panels are mounted together in groups, e.g. three modules together, then a gap, then three more modules, etc.
+When finished, just submit a pull request to the master branch and we'll take a look.  As above *please* let us know if you have any questions or comments – our goal is to create a useful, relevant, and (hopefully) interesting exercise; not to frustrate you!
 
-4. Implement **Module Orientation**, let users choose to place the modules in either portrait or landscape (e.g. each module individually rotated 90º)
-
-5. Implement **tilt**, this is how far the modules are tilted up.  E.g. a module tilted at 45º has the top tilted up (so the module forms a 45º angle with the ground), so that the module is pointed more towards the sun.
-
-6. Implement **azimuth**, in reality the modules could be oriented to face any direction (e.g. Southwest), azimuth defines which directions the modules face, where 0º is North, 180º is south, 90ª is East, and 270º is West
-
-
-[This training video (1:39)](https://www.youtube.com/watch?v=cnyIpSLW6hg) from HelioScope shows how many of the rules work. [This image](https://helioscope.folsomlabs.com/static/helioscope/documentation/static/overlays/fixed-racking.png) from our documentation visualizes a few of these parameters: **row spacing**, **tilt**, and **modules in row** ('Frame Size = 4 Modules Up' would be the same as '4 **Modules in Row**')

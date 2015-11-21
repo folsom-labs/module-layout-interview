@@ -1,7 +1,12 @@
 /*globals google:true, window:true, document:true, google:true, Geometry:true, $:true */
-"use strict";
+'use strict';
+
 
 function fillPolygon(boundaryPolygon, layoutRules) {
+    // This function currently populated with dummy code to draw a module at an
+    // arbitrary location.  Update it with your code to fill the polygon with
+    // solar panels
+    //
     // see google maps reference may be useful
     // https://developers.google.com/maps/documentation/javascript/reference
 
@@ -9,13 +14,12 @@ function fillPolygon(boundaryPolygon, layoutRules) {
         boundaryPath = boundaryPolygon.getPath(),
 
 
-        //define the four corners of a rectangle starting at the first point
-        //in the polygon path
-        topLeft = boundaryPath.getAt(0),
-        bottomLeft = Geometry.offset(topLeft, layoutRules.height, 180),
-        bottomRight = Geometry.offset(bottomLeft, layoutRules.width, 90),
-        topRight = Geometry.offset(bottomRight, layoutRules.height, 0),
-
+        // define the four corners of a rectangle starting at the first point (arbitrarily)
+        // in the polygon path
+        topLeft     = boundaryPath.getAt(0),
+        bottomLeft  = Geometry.offsetXY(topLeft, 0,                 -layoutRules.height),
+        bottomRight = Geometry.offsetXY(topLeft, layoutRules.width, -layoutRules.height),
+        topRight    = Geometry.offsetXY(topLeft, layoutRules.width, 0),
 
         // draw a polygon for a single Module
         modulePolygon = new google.maps.Polygon({
@@ -26,9 +30,37 @@ function fillPolygon(boundaryPolygon, layoutRules) {
             strokeWeight: 2,
             path: [topLeft, bottomLeft, bottomRight, topRight]
         });
+
 }
 
+/**
+ * have the user input a polygon in the map and call the callback with the finished polygon
+ * @param  {google.maps.Map}   map
+ * @param  {function} callback
+ */
+function getPolygon(map, callback) {
+    var drawingManager = new google.maps.drawing.DrawingManager({
+            map: map,
+            drawingControl: false,
+            drawingMode: google.maps.drawing.OverlayType.POLYGON,
+            polygonOptions: {
+                fillColor: '#55FF55',
+                strokeColor: '#55FF55',
+                fillOpacity: 0.2,
+                strokeWeight: 5,
+                clickable: false,
+                editable: false,
+                zIndex: 0
+            }
+        });
 
+    google.maps.event.addListenerOnce(drawingManager, 'polygoncomplete', function (polygon) {
+        callback(polygon);
+
+        drawingManager.setMap(null);
+    });
+
+}
 
 function initialize() {
     var mapOptions = {
@@ -40,53 +72,22 @@ function initialize() {
 
         },
         map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions),
-        drawingManager = new google.maps.drawing.DrawingManager({
-            map: map,
-            drawingControl: false,
-            drawingControlOptions: {
-                position: google.maps.ControlPosition.TOP_CENTER,
-                drawingModes: [
-                    google.maps.drawing.OverlayType.POLYGON,
-                ]
-            },
-            polygonOptions: {
-                fillColor: '#55FF55',
-                strokeColor: '#55FF55',
-                fillOpacity: 0.2,
-                strokeWeight: 5,
-                clickable: false,
-                editable: false,
-                zIndex: 0
-            }
-        }),
         button = $('#drawModules');
 
 
     button.on('click', function () {
         button.prop('disabled', true);
 
-        drawingManager.setOptions({
-            drawingMode: google.maps.drawing.OverlayType.POLYGON
-        });
+        getPolygon(map, function(polygon){
+            console.log('Got Polygon from User');
 
-        google.maps.event.addListenerOnce(drawingManager, 'polygoncomplete', function (polygon) {
-            drawingManager.setOptions({
-                drawingMode: null
-            });
-            console.log("Got Polygon");
+            var layoutOptions = {
+                width: $('#moduleWidth').val(),     // meters
+                height: $('#moduleHeight').val(),   // meters
+                rowSpacing: $('#rowSpacing').val(), // meters
+            };
 
-            fillPolygon(polygon, {
-                width: $('#moduleWidth').val(), // meters
-                height: $('#moduleHeight').val(),
-
-                rowSpacing: $('#rowSpacing').val(),
-                modulesInRow: $('#modulesInRow').val(),
-
-                orientation: $('#orientation').val(),
-                tilt: $('#tilt').val(),
-                azimuth: $('#azimuth').val()
-            });
-
+            fillPolygon(polygon, layoutOptions);
             button.prop('disabled', false);
         });
     });
