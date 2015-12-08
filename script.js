@@ -3,34 +3,63 @@
 
 
 function fillPolygon(boundaryPolygon, layoutRules) {
-    // This function currently populated with dummy code to draw a module at an
-    // arbitrary location.  Update it with your code to fill the polygon with
-    // solar panels
-    //
-    // see google maps reference may be useful
-    // https://developers.google.com/maps/documentation/javascript/reference
-
     var map = boundaryPolygon.getMap(),
-        boundaryPath = boundaryPolygon.getPath(),
+        boundaryPath = boundaryPolygon.getPath()
+
+    // create a rectangular are surrounding the user defined polygon
+    var bounds = Geometry.bounds(boundaryPolygon),
+    // by getting the latitude and longitude of the top right and bottom left of the rectangular area
+    // we can iterate over that area and see if the solar modules fit in any particular segment 
+    start = bounds.getNorthEast(),
+    end = bounds.getSouthWest()
+
+    // find the angle and distance between those points, to compute the x and y component of the 
+    // hypotenuse, so we can iterate over those distances
+    var distance = Geometry.distance(start,end),
+        angle = Geometry.heading(start,end) + 180
+
+    // convert to radians
+    var xDistance = Math.sin(Math.PI/180 * angle) * distance , 
+        yDistance = Math.cos(Math.PI/180 * angle) * distance
+
+    // define the spaces between rows
+    var rowSpacing = parseInt(layoutRules.rowSpacing);
+    // move over y axis 
+    for (var y = 0; y > -yDistance; y-=layoutRules.height){
+        y -= rowSpacing
+        // move over x axis
+        for (var x = 0; x > -xDistance; x-= layoutRules.width){
+            var topLeft = Geometry.offsetXY(start,x,y),
+            bottomLeft  = Geometry.offsetXY(topLeft, 0,                 -layoutRules.height),
+            bottomRight = Geometry.offsetXY(topLeft, layoutRules.width, -layoutRules.height),
+            topRight    = Geometry.offsetXY(topLeft, layoutRules.width, 0)
+            // call checkbounds to check if module is inside the user drawn polygon
+            // if it is, we draw the module
+            if (checkBounds(boundaryPolygon,topLeft,bottomLeft,bottomRight,topRight)){
+                drawModule(topLeft,bottomLeft,bottomRight,topRight,map)     
+            }
+        }
+    };
+}
+
+function checkBounds(boundaryPolygon,topLeft,bottomLeft,bottomRight,topRight){
+    return Geometry.containsLocation(boundaryPolygon,topLeft) &&
+    Geometry.containsLocation(boundaryPolygon,topRight) &&
+    Geometry.containsLocation(boundaryPolygon,bottomLeft) &&
+    Geometry.containsLocation(boundaryPolygon,bottomRight) 
+}
 
 
-        // define the four corners of a rectangle starting at the first point (arbitrarily)
-        // in the polygon path
-        topLeft     = boundaryPath.getAt(0),
-        bottomLeft  = Geometry.offsetXY(topLeft, 0,                 -layoutRules.height),
-        bottomRight = Geometry.offsetXY(topLeft, layoutRules.width, -layoutRules.height),
-        topRight    = Geometry.offsetXY(topLeft, layoutRules.width, 0),
-
-        // draw a polygon for a single Module
-        modulePolygon = new google.maps.Polygon({
-            map: map,
-            fillColor: '#0000FF',
-            strokeColor: '#0000FF',
-            fillOpacity: 0.5,
-            strokeWeight: 2,
-            path: [topLeft, bottomLeft, bottomRight, topRight]
-        });
-
+function drawModule(topLeft,bottomLeft,bottomRight,topRight,map){
+    // draw a polygon for a single Module
+    var modulePolygon = new google.maps.Polygon({
+        map: map,
+        fillColor: '#0000FF',
+        strokeColor: '#0000FF',
+        fillOpacity: 0.5,
+        strokeWeight: 2,
+        path: [topLeft, bottomLeft, bottomRight, topRight]
+    });
 }
 
 /**
