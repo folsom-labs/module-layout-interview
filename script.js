@@ -20,24 +20,28 @@ function fillPolygon(boundaryPolygon, layoutRules) {
         topLeft     = boundaryPath.getAt(0),
         bottomLeft  = Geometry.offsetXY(topLeft, 0,                 -layoutRules.height),
         bottomRight = Geometry.offsetXY(topLeft, layoutRules.width, -layoutRules.height),
-        topRight    = Geometry.offsetXY(topLeft, layoutRules.width, 0),
- 
-        isInside1 = Geometry.containsLocation(boundaryPolygon,topLeft),
-        isInside4 = Geometry.containsLocation(boundaryPolygon,topRight),
-        isInside2 = Geometry.containsLocation(boundaryPolygon,bottomLeft),
-        isInside3 = Geometry.containsLocation(boundaryPolygon,bottomRight)
+        topRight    = Geometry.offsetXY(topLeft, layoutRules.width, 0)
+        
     // check if module is inside the user drawn polygon
-    if (isInside1 && isInside2 && isInside3 && isInside4){
+    if (checkBounds(boundaryPolygon,topLeft,bottomLeft,bottomRight,topRight)){
         console.log('is inside the polygon')
     } else {
         console.log('outside the bounds')
     }
+    drawModule(topLeft,bottomLeft,bottomRight,topRight,map)
+}
+
+function checkBounds(boundaryPolygon,topLeft,bottomLeft,bottomRight,topRight){
+    return Geometry.containsLocation(boundaryPolygon,topLeft) &&
+    Geometry.containsLocation(boundaryPolygon,topRight) &&
+    Geometry.containsLocation(boundaryPolygon,bottomLeft) &&
+    Geometry.containsLocation(boundaryPolygon,bottomRight) 
 }
 
 
 function drawModule(topLeft,bottomLeft,bottomRight,topRight,map){
     // draw a polygon for a single Module
-    modulePolygon = new google.maps.Polygon({
+    var modulePolygon = new google.maps.Polygon({
         map: map,
         fillColor: '#0000FF',
         strokeColor: '#0000FF',
