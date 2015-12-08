@@ -10,19 +10,32 @@ function fillPolygon(boundaryPolygon, layoutRules) {
     // see google maps reference may be useful
     // https://developers.google.com/maps/documentation/javascript/reference
 
+    // check if module is inside the user drawn polygon
+    var bounds = Geometry.bounds(boundaryPolygon),
+    start = bounds.getNorthEast(),
+    end = bounds.getSouthWest()
 
     var map = boundaryPolygon.getMap(),
-        boundaryPath = boundaryPolygon.getPath(),
+        boundaryPath = boundaryPolygon.getPath()
 
+    var distance = Geometry.distance(start,end),
+        angle = Geometry.heading(start,end) + 180
 
-        // define the four corners of a rectangle starting at the first point (arbitrarily)
+    console.log(distance,angle)
+
+        // define the four corners of a rectangle starting at the first point, edge of bounds
+
         // in the polygon path
-        topLeft     = boundaryPath.getAt(0),
+        var topLeft = start,
+        // topLeft     = boundaryPath.getAt(0),
         bottomLeft  = Geometry.offsetXY(topLeft, 0,                 -layoutRules.height),
         bottomRight = Geometry.offsetXY(topLeft, layoutRules.width, -layoutRules.height),
         topRight    = Geometry.offsetXY(topLeft, layoutRules.width, 0)
-        
-    // check if module is inside the user drawn polygon
+    // find bounds of polygon
+
+
+
+
     if (checkBounds(boundaryPolygon,topLeft,bottomLeft,bottomRight,topRight)){
         console.log('is inside the polygon')
     } else {
