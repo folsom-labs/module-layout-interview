@@ -37,6 +37,7 @@ function fillPolygon(boundaryPolygon, layoutRules) {
             // if it is, we draw the module
             if (checkBounds(boundaryPolygon,topLeft,bottomLeft,bottomRight,topRight)){
                 drawModule(topLeft,bottomLeft,bottomRight,topRight,map)     
+            }
         }
     };
 }
