@@ -21,27 +21,31 @@ function fillPolygon(boundaryPolygon, layoutRules) {
     var distance = Geometry.distance(start,end),
         angle = Geometry.heading(start,end) + 180
 
-    console.log(distance,angle)
+    // convert to radians
+    var xDistance = Math.sin(Math.PI/180 * angle) * distance , 
+        yDistance = Math.cos(Math.PI/180 * angle) * distance
 
         // define the four corners of a rectangle starting at the first point, edge of bounds
-
-        // in the polygon path
-        var topLeft = start,
-        // topLeft     = boundaryPath.getAt(0),
-        bottomLeft  = Geometry.offsetXY(topLeft, 0,                 -layoutRules.height),
-        bottomRight = Geometry.offsetXY(topLeft, layoutRules.width, -layoutRules.height),
-        topRight    = Geometry.offsetXY(topLeft, layoutRules.width, 0)
-    // find bounds of polygon
-
-
-
-
-    if (checkBounds(boundaryPolygon,topLeft,bottomLeft,bottomRight,topRight)){
-        console.log('is inside the polygon')
-    } else {
-        console.log('outside the bounds')
-    }
-    drawModule(topLeft,bottomLeft,bottomRight,topRight,map)
+    console.log(start,xDistance,layoutRules)
+    // move over x axis
+    for (var x = 0; x > -xDistance; x-= layoutRules.width) {
+        // move over y axis 
+        for (var y = 0; y > -yDistance; y-= (layoutRules.height + layoutRules.rowSpacing)){
+            // in the polygon path
+            var topLeft = Geometry.offsetXY(start,x,y),
+            // topLeft     = boundaryPath.getAt(0),
+            bottomLeft  = Geometry.offsetXY(topLeft, 0,                 -layoutRules.height),
+            bottomRight = Geometry.offsetXY(topLeft, layoutRules.width, -layoutRules.height),
+            topRight    = Geometry.offsetXY(topLeft, layoutRules.width, 0)
+            // find bounds of polygon
+            if (checkBounds(boundaryPolygon,topLeft,bottomLeft,bottomRight,topRight)){
+                // console.log('is inside the polygon')
+                drawModule(topLeft,bottomLeft,bottomRight,topRight,map)
+            } else {
+                // console.log('outside the bounds')
+            }            
+        }
+    };
 }
 
 function checkBounds(boundaryPolygon,topLeft,bottomLeft,bottomRight,topRight){
