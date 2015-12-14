@@ -55,6 +55,19 @@ var Geometry = {
         return google.maps.geometry.poly.containsLocation(latLng, polygon);
     },
 
+    /**
+     * Return true if a polygon contains all points in the Array 'panelPoints
+     * @param  {google.maps.Polygon} polygon
+     * @param  {Array of google.maps.LatLng} panelPoints
+     * @return {boolean} panelPoints fits in polygon
+     */
+    containsPanel: function (polygon, panelPoints) {
+        return Geometry.containsLocation(polygon, panelPoints[0]) &&
+            Geometry.containsLocation(polygon, panelPoints[1]) &&
+            Geometry.containsLocation(polygon, panelPoints[2]) &&
+            Geometry.containsLocation(polygon, panelPoints[3]);
+    },
+
 
     /**
      * return a new point that is a specific distance (meters) and heading (degrees)
