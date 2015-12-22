@@ -55,6 +55,19 @@ var Geometry = {
         return google.maps.geometry.poly.containsLocation(latLng, polygon);
     },
 
+    /** return true if a source polygon contains all points in a path
+     *      this fails to verify the polygon created by the path is actually in the source polygon
+     * @param  {google.maps.Polygon} polygon
+     * @param  {google.maps.LatLng[]} path
+     * @return {boolean} checkPolygon is in sourcePolygon
+     */
+    containsPath: function(polygon, path) {
+        for (var i = 0; i < path.length; i++) {
+            if (!this.containsLocation(polygon, path[i]))
+                return false;
+        }
+        return true;
+    },
 
     /**
      * return a new point that is a specific distance (meters) and heading (degrees)
