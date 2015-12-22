@@ -3,34 +3,68 @@
 
 
 function fillPolygon(boundaryPolygon, layoutRules) {
-    // This function currently populated with dummy code to draw a module at an
-    // arbitrary location.  Update it with your code to fill the polygon with
-    // solar panels
-    //
-    // see google maps reference may be useful
-    // https://developers.google.com/maps/documentation/javascript/reference
-
     var map = boundaryPolygon.getMap(),
-        boundaryPath = boundaryPolygon.getPath(),
+        //boundaryPath = boundaryPolygon.getPath(),
+        boundingBox = Geometry.bounds(boundaryPolygon),
+        corners = [boundingBox.getNorthEast(), boundingBox.getSouthWest()],
+
+        // define the top left of the module as the top left of the bounding box
+        topLeft     = new google.maps.LatLng(corners[0].lat(),corners[1].lng()),
+
+        // store the modules we add to the map (don't need this for displaying, just maybe useful to have)
+        modules = [];
+
+    // get the module polygon path when given the top left as maps.google.LatLng
+    function getModulePath(topLeft) {
+        return [
+            topLeft,
+            Geometry.offsetXY(topLeft, 0,                 -layoutRules.height),
+            Geometry.offsetXY(topLeft, layoutRules.width, -layoutRules.height),
+            Geometry.offsetXY(topLeft, layoutRules.width, 0),
+        ]
+    }
+
+    // create a bounding box
+    var boundingPolygon = new google.maps.Polygon({
+        //map: map,               // uncomment for visible testing bounding box
+        fillColor: '#444444',
+        strokeColor: '#444444',
+        fillOpacity: 0.4,
+        strokeWeight: 2,
+        path: [
+            {lat: corners[0].lat(), lng: corners[1].lng()},
+            {lat: corners[1].lat(), lng: corners[1].lng()},
+            {lat: corners[1].lat(), lng: corners[0].lng()},
+            {lat: corners[0].lat(), lng: corners[0].lng()}
+        ]
+    });
 
 
-        // define the four corners of a rectangle starting at the first point (arbitrarily)
-        // in the polygon path
-        topLeft     = boundaryPath.getAt(0),
-        bottomLeft  = Geometry.offsetXY(topLeft, 0,                 -layoutRules.height),
-        bottomRight = Geometry.offsetXY(topLeft, layoutRules.width, -layoutRules.height),
-        topRight    = Geometry.offsetXY(topLeft, layoutRules.width, 0),
+    var newTL = topLeft;
+    while (Geometry.containsLocation(boundingPolygon, newTL)) {
+        var successfulRow = false;
 
-        // draw a polygon for a single Module
-        modulePolygon = new google.maps.Polygon({
-            map: map,
-            fillColor: '#0000FF',
-            strokeColor: '#0000FF',
-            fillOpacity: 0.5,
-            strokeWeight: 2,
-            path: [topLeft, bottomLeft, bottomRight, topRight]
-        });
+        while(Geometry.containsLocation(boundingPolygon, newTL)) {
+            var p = getModulePath(newTL);
+            if (Geometry.containsPath(boundaryPolygon, p)) {
+                modules.push(new google.maps.Polygon({
+                    map: map,
+                    fillColor: '#0000FF',
+                    strokeColor: '#0000FF',
+                    fillOpacity: 0.5,
+                    strokeWeight: 2,
+                    path: getModulePath(newTL)
+                }));
+                newTL = Geometry.offsetXY(newTL, layoutRules.width, 0);
+                successfulRow = true;
+            } else {
+                newTL = Geometry.offsetXY(newTL, layoutRules.width/4, 0);   // width/4 is arbitrary
+            }
+        }
 
+        var adjustment = successfulRow ? layoutRules.rowSpacing + layoutRules.height : layoutRules.rowSpacing/2;
+        newTL = Geometry.offsetXY(new google.maps.LatLng(newTL.lat(), topLeft.lng()), 0, -adjustment);
+    }
 }
 
 /**
@@ -82,9 +116,9 @@ function initialize() {
             console.log('Got Polygon from User');
 
             var layoutOptions = {
-                width: $('#moduleWidth').val(),     // meters
-                height: $('#moduleHeight').val(),   // meters
-                rowSpacing: $('#rowSpacing').val(), // meters
+                width: parseFloat($('#moduleWidth').val()),     // meters
+                height: parseFloat($('#moduleHeight').val()),   // meters
+                rowSpacing: parseFloat($('#rowSpacing').val()), // meters
             };
 
             fillPolygon(polygon, layoutOptions);
