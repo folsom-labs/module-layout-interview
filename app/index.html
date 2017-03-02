@@ -7,12 +7,9 @@
 
 
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
-    <link rel="stylesheet" href="styles.css">
-
-    <script src='https://code.jquery.com/jquery-2.1.3.min.js'></script>
     <script src ='https://maps.google.com/maps/api/js?key=AIzaSyBdv-5ZpUGMLJicoPGVAFpNotuC03Xsejw&libraries=geometry,drawing'></script>
-    <script src='geometry.js'></script>
-    <script src='script.js'></script>
+    <!-- <script src='geometry.js'></script> -->
+    <!-- <script src='script.js'></script> -->
 
 </head>
 <body>
@@ -43,6 +40,13 @@
                             <div class="input-group-addon">m</div>
                         </div>
                     </div>
+                    <div class="form-group form-group-sm">
+                        <label for="azimuth">Azimuth</label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="azimuth" value=0>
+                            <div class="input-group-addon">&deg;</div>
+                        </div>
+                    </div>
 
                     <button type="button" class="btn btn-primary btn-lg btn-block" id="drawModules">Draw Polygon</button>
                 </form>
@@ -52,4 +56,3 @@
     <div id="map-canvas"></div>
 </body>
 </html>
-

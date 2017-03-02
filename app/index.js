@@ -1,5 +1,13 @@
-/*globals google:true, window:true, document:true, google:true, Geometry:true, $:true */
-'use strict';
+/* globals google:true, window:true, document:true */
+
+require("./style.css");
+
+import $ from 'jquery';
+
+import { Vector } from './geometry/vector';
+import { Bounds } from './geometry/bounds';
+import { GeoPoint, pathMidpoint, convertToGoogle } from './geometry/geography';
+
 
 
 function fillPolygon(boundaryPolygon, layoutRules) {
@@ -10,26 +18,30 @@ function fillPolygon(boundaryPolygon, layoutRules) {
     // see google maps reference may be useful
     // https://developers.google.com/maps/documentation/javascript/reference
 
-    var map = boundaryPolygon.getMap(),
-        boundaryPath = boundaryPolygon.getPath(),
+    const map = boundaryPolygon.getMap();
 
+    // convert the polygon path from google Lat Lng Objects to a more convenient GeoPoint class
+    const googlePath = boundaryPolygon.getPath().getArray();
+    const boundaryPath = googlePath.map(ll => new GeoPoint(ll));
 
-        // define the four corners of a rectangle starting at the first point (arbitrarily)
-        // in the polygon path
-        topLeft     = boundaryPath.getAt(0),
-        bottomLeft  = Geometry.offsetXY(topLeft, 0,                 -layoutRules.height),
-        bottomRight = Geometry.offsetXY(topLeft, layoutRules.width, -layoutRules.height),
-        topRight    = Geometry.offsetXY(topLeft, layoutRules.width, 0),
+    // just draw an arbitray polgyon in the center of the path, as an example
 
-        // draw a polygon for a single Module
-        modulePolygon = new google.maps.Polygon({
-            map: map,
-            fillColor: '#0000FF',
-            strokeColor: '#0000FF',
-            fillOpacity: 0.5,
-            strokeWeight: 2,
-            path: [topLeft, bottomLeft, bottomRight, topRight]
-        });
+    const midpoint = pathMidpoint(boundaryPath);
+
+    const topLeft = midpoint.offsetXY(-layoutRules.width / 2, layoutRules.height / 2);
+    const bottomLeft = midpoint.offsetXY(-layoutRules.width / 2, -layoutRules.height / 2);
+    const bottomRight = midpoint.offsetXY(layoutRules.width / 2, -layoutRules.height / 2);
+    const topRight = midpoint.offsetXY(layoutRules.width / 2, layoutRules.height / 2);
+
+    // draw a polygon for a single Module
+    var modulePolygon = new google.maps.Polygon({
+        map: map,
+        fillColor: '#0000FF',
+        strokeColor: '#0000FF',
+        fillOpacity: 0.5,
+        strokeWeight: 2,
+        path: convertToGoogle([topLeft, bottomLeft, bottomRight, topRight]),
+    });
 
 }
 
@@ -70,9 +82,9 @@ function initialize() {
             mapTypeId: google.maps.MapTypeId.HYBRID,
             tilt: 0,
 
-        },
-        map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions),
-        button = $('#drawModules');
+        };
+    var map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
+    var button = $('#drawModules');
 
 
     button.on('click', function () {
@@ -82,9 +94,10 @@ function initialize() {
             console.log('Got Polygon from User');
 
             var layoutOptions = {
-                width: $('#moduleWidth').val(),     // meters
-                height: $('#moduleHeight').val(),   // meters
-                rowSpacing: $('#rowSpacing').val(), // meters
+                width: Number($('#moduleWidth').val()),     // meters
+                height: Number($('#moduleHeight').val()),   // meters
+                azimuth: Number($('#azimuth').val()),   // meters
+                rowSpacing: Number($('#rowSpacing').val()), // meters
             };
 
             fillPolygon(polygon, layoutOptions);
@@ -94,4 +107,8 @@ function initialize() {
 }
 
 google.maps.event.addDomListener(window, 'load', initialize);
+
+
+
+
 
