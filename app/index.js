@@ -93,7 +93,7 @@ function initialize() {
             var layoutOptions = {
                 width: Number($('#moduleWidth').val()),     // meters
                 height: Number($('#moduleHeight').val()),   // meters
-                azimuth: Number($('#azimuth').val()),   // meters
+                azimuth: Number($('#azimuth').val()),   // degrees
                 rowSpacing: Number($('#rowSpacing').val()), // meters
             };
 

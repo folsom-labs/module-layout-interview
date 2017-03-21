@@ -12,12 +12,6 @@ export function pointInPolygon(point, polygon) {
 
     const { x, y } = point;
 
-    if (!Array.isArray(polygon[0][0])) {
-        // this algo designed for nested polygons, so if the first element of the array is not a polgyon,
-        // wrap the whole thing
-        polygon = [polygon];
-    }
-
     let inside = false;
     for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
         let xi = polygon[i].x, yi = polygon[i].y;
