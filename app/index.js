@@ -6,41 +6,73 @@ import $ from 'jquery';
 
 import { Vector } from './geometry/vector';
 import { Bounds } from './geometry/bounds';
-import { GeoPoint, pathMidpoint, convertToGoogle } from './geometry/geography';
+import { pointInPolygon } from './geometry/geometry';
+import {
+    convertToGoogle,
+    GeoPoint,
+    pathMidpoint,
+    geopointInPolygon,
+} from './geometry/geography';
 
 
 function fillPolygon(boundaryPolygon, layoutRules) {
     // This function currently populated with dummy code to draw a module at an
-    // arbitrary location.  Update it with your code to fill the polygon with
-    // solar panels
+    // arbitrary location (we've added our own geometry libraries to make spatial
+    // operations easier, these are some examples).
     //
-    // we've added a fleshed out geometry library, so you can do simple spatial operations
+    // Update this function with your code to fill the polygon with solar panels.
+
+
     const map = boundaryPolygon.getMap();
 
-    // convert the polygon path from google Lat Lng Objects to a more convenient GeoPoint class
+    // convert the polygon path from raw google LatLng Objects to a more convenient GeoPoint class
+    // that extends google maps lat/lngs to expose more useful functions
     const googlePath = boundaryPolygon.getPath().getArray();
     const boundaryPath = googlePath.map(ll => new GeoPoint(ll));
 
-    // just draw an arbitray polgyon in the center of the path, as an example
-
+    // get the midpoint of the polygon (the midpoint of a bounding box around the polygon)
     const midpoint = pathMidpoint(boundaryPath);
 
-    const topLeft = midpoint.offsetXY(-layoutRules.width / 2, layoutRules.height / 2);
-    const bottomLeft = midpoint.offsetXY(-layoutRules.width / 2, -layoutRules.height / 2);
-    const bottomRight = midpoint.offsetXY(layoutRules.width / 2, -layoutRules.height / 2);
-    const topRight = midpoint.offsetXY(layoutRules.width / 2, layoutRules.height / 2);
+    // you can work wit latitude/longitude directly using the geopoint object
+    // this has convenience functions for offsetting by fixed meters or lat/lngs
+    console.log("Midpoint is in polygon?", geopointInPolygon(midpoint, boundaryPath));
+    console.log("Midpoint shifted 25m to east is in polygon?", geopointInPolygon(midpoint.offsetXY(25, 0), boundaryPath));
 
-    // draw a polygon for a single Module
-    var modulePolygon = new google.maps.Polygon({
+    // construct an arbitrary module path starting at the midpoint
+    const modulePath = [
+        midpoint, // top left
+        midpoint.offsetXY(0, -layoutRules.height), // bottom left
+        midpoint.offsetXY(layoutRules.width, -layoutRules.height), // bottom right
+        midpoint.offsetXY(layoutRules.width, 0), // top right
+    ]
+
+    // draw a polygon for this path
+    // the google maps API for drawing a polygon is a little arcane, but, so it is
+    new google.maps.Polygon({
         map: map,
-        fillColor: '#0000FF',
-        strokeColor: '#0000FF',
+        fillColor: 'blue',
+        strokeColor: 'blue',
         fillOpacity: 0.5,
         strokeWeight: 2,
-        path: convertToGoogle([topLeft, bottomLeft, bottomRight, topRight]),
+        path: modulePath,
     });
 
+    // shift the polygon by 10 meters a bearing of 45 degrees
+    new google.maps.Polygon({
+        map: map,
+        fillColor: 'red',
+        strokeColor: 'red',
+        fillOpacity: 0.5,
+        strokeWeight: 2,
+        path: modulePath.map(gp => gp.offset(10, 45)), // shift the path 10m by a bearing of 45
+    });
 }
+
+
+
+
+// the following is all the glue code to to tie the User Interface to the draw a polygon function
+
 
 /**
  * have the user input a polygon in the map and call the callback with the finished polygon

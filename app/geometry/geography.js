@@ -1,6 +1,7 @@
 import { toRadians, toDegrees } from './math';
 import { Vector } from './vector';
 import { Bounds } from './bounds';
+import { pointInPolygon } from './geometry';
 
 export const RADIUS_OF_EARTH = 6378137; // meters
 
@@ -10,22 +11,21 @@ export function bearingFromVector(vector) {
 }
 
 
-export class GeoPoint {
+export class GeoPoint extends google.maps.LatLng {
     constructor(latitude, longitude) {
         if (typeof latitude === 'number') {
-            this.latitude = latitude;
-            this.longitude = longitude;
+            super({lat: latitude, lng: longitude });
         } else if (typeof latitude.latitude === 'number') { // from POJO
-            this.latitude = latitude.latitude;
-            this.longitude = latitude.longitude;
+            super({lat: latitude.latitude, lng: latitude.longitude });
         } else { // from Google Maps
-            this.latitude = latitude.lat();
-            this.longitude = latitude.lng();
+            super({lat: latitude.lat(), lng: latitude.lng() });
         }
     }
 
     /**
-     * http://en.wikipedia.org/wiki/Haversine_formula
+     * get the distance to another GeoPoint
+     *
+     * uses the haversine equation: http://en.wikipedia.org/wiki/Haversine_formula
      */
     distance(other) {
         const deltaLat = toRadians(this.latitude - other.latitude);
@@ -44,6 +44,9 @@ export class GeoPoint {
         return RADIUS_OF_EARTH * arc;
     }
 
+    /**
+     * get the bearing to another GeoPoint
+     */
     bearing(other) {
         const deltaLng = toRadians(other.longitude - this.longitude);
 
@@ -54,6 +57,9 @@ export class GeoPoint {
         return toDegrees(Math.atan2(y, x));
     }
 
+    /**
+     * offset the GeoPoint by a vector (X, Y, Z);
+     */
     offsetVector(vector, radius = RADIUS_OF_EARTH) {
         const bearing = bearingFromVector(vector);
 
@@ -61,12 +67,15 @@ export class GeoPoint {
         return this.offset(Math.sqrt(vector.x ** 2 + vector.y ** 2), bearing, radius);
     }
 
+    /**
+     * offset this geopoint by X and Y in meters
+     */
     offsetXY(x, y) {
         return this.offsetVector(new Vector(x, y));
     }
 
     /**
-     * ported from google maps
+     * offset by a a specific distance and heading
      */
     offset(distance, heading, radius = RADIUS_OF_EARTH) {
         const normalizedDistance = distance / radius;
@@ -86,7 +95,6 @@ export class GeoPoint {
         );
     }
 
-
     /**
      * get a vector representing the distance in meters between this and a different point
      */
@@ -97,14 +105,15 @@ export class GeoPoint {
         return new Vector(Math.sin(bearing) * distance, Math.cos(bearing) * distance);
     }
 
-    googleLatLng() {
-        if (window.google !== undefined) {
-            return new window.google.maps.LatLng(this.latitude, this.longitude);
-        }
-
-        console.error('Warning, tried to access google maps, but not loaded yet');
-        return null;
+    // convenience methods for getting latitude and longitude
+    get latitude() {
+        return this.lat();
     }
+
+    get longitude() {
+        return this.lng();
+    }
+
 }
 
 /**
@@ -113,15 +122,12 @@ export class GeoPoint {
  * NOTE: breaks down when crossing a longitude of 0/360
  */
 export function pathMidpoint(path) {
-    const bounds = new Bounds();
+    const coordSystem = new XYCoordinateSystem(path[0]);
 
-    for (const { latitude, longitude } of path) {
-        bounds.extendVector(new Vector(longitude, latitude));
-    }
+    const xyPath = coordSystem.toXY(path);
+    const bounds = new Bounds(xyPath);
 
-    const { x, y } = bounds.midpoint;
-
-    return new GeoPoint(y, x);
+    return coordSystem.toLatLng(bounds.midpoint);
 }
 
 export function convertToGoogle(geopoint) {
@@ -133,28 +139,37 @@ export function convertToGoogle(geopoint) {
 }
 
 
+export function geopointInPolygon(geopoint, geopolygon) {
+    const coordSystem = new XYCoordinateSystem(geopoint);
+    const point = coordSystem.toXY(geopoint); // this should always be (0, 0)
+    const xyPolygon = coordSystem.toXY(geopolygon);
+
+    return pointInPolygon(point, xyPolygon);
+}
+
 /**
  * class for creating a (simpler) cartesian coordinate system from geopoints by
  * providing a center point in Lat/Lng and then siplifying X/Y and Lat/Lng offsets around that point
  */
-class XYCoordinateSystem {
+export class XYCoordinateSystem {
     constructor(centerGeopoint) {
-        this.center = center;
+        this.center = centerGeopoint;
     }
 
-    convertToVector(geopoint) {
+    toXY(geopoint) {
         if (Array.isArray(geopoint)) {
-            return geopoint.map(gp => this.conveterToVector(gp));
+            return geopoint.map(gp => this.toXY(gp));
         }
 
         return this.center.gridOffsets(geopoint);
     }
 
-    convertToGeopoint(vector) {
-        if (Array.isArray(geopoint)) {
-            return vector.map(vec => this.convertToGeopoint(vec));
+    toLatLng(vector) {
+        if (Array.isArray(vector)) {
+            return vector.map(vec => this.toLatLng(vec));
         }
 
         return this.center.offsetVector(vector);
     }
 }
+
